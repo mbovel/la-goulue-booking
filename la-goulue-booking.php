@@ -11,43 +11,114 @@ Version: 0.4
 */
 
 class Goulue_Booking {
-	
-	/**
-	 * Main function
-	 *
-	 * First function called. Add filters, actions, sortcodes, etc.
-	 *
-	 * @since 1
-	 * @access public
-	 */
 	public function run() {
 		add_shortcode('gou_booking',                        [&$this, 'shortcode']);
 		
 		if(!is_admin()) return;
 		
-		add_action('wp_loaded',                             [&$this, 'register']);
-
-		// Administration
+		// Admin
+		
+		add_action('wp_loaded',                             [&$this, 'register_scripts_and_styles']);
+		add_action('wp_loaded',                             [&$this, 'register_post_type']);
+		
 		add_action('admin_menu',                            [&$this, 'add_admin_page']);
 		add_action('admin_enqueue_scripts',                 [&$this, 'admin_enqueue']);
-		add_action('wp_ajax_update_gou_booking',            [&$this, 'ajax']);
-		add_action('wp_loaded',                             [&$this, 'register_post_types']);
 		
 		add_filter('acf/load_value/name=gou_booking_start', [&$this, 'post_edit_start_value'], 10, 3);
 		add_filter('acf/load_value/name=gou_booking_end',   [&$this, 'post_edit_end_value'], 10, 3);
 	}
 	
-	public function post_edit_start_value($value) {
-		return isset($_GET['gou_booking_start']) ? $_GET['gou_booking_start'] : $value;
+	public function shortcode($atts) {
+		extract( shortcode_atts( array(
+			'year' => date('Y')
+		), $atts ) );
+		
+		return $this->get_year($year);
 	}
 	
-	public function post_edit_end_value($value) {
-		return isset($_GET['gou_booking_end']) ? $_GET['gou_booking_end'] : $value;
-	}
+	/*********/
+	/* Admin */
+	/*********/
 	
-	public function register() {
+	public function register_scripts_and_styles() {
 		wp_register_script('drag-select-js', plugins_url('js/drag-select.js', __FILE__), [], null);
 		wp_register_style('gouOrganAdmin', plugins_url('css/admin.css', __FILE__), [], null);
+	}
+	
+	public function register_post_type() {
+		register_post_type('gou_reservation', [
+		    'label'					=> 'Réservations',
+		    'public'				=> false,
+		    'publicly_queryable'	=> false,
+		    'show_ui'				=> true,
+		    'has_archive'			=> false,
+		    'hierarchical'			=> false,
+		    'show_in_menu'			=> true,
+		    'menu_icon'			    => 'dashicons-book-alt',
+		    'menu_position'			=> 30
+		]);
+		
+		if(function_exists("register_field_group")) {
+			register_field_group(array (
+				'id' => 'acf_reservation',
+				'title' => 'Réservation',
+				'fields' => array (
+					array (
+						'key' => 'field_552416802a2c2',
+						'label' => 'Début',
+						'name' => 'gou_booking_start',
+						'type' => 'date_picker',
+						'required' => 1,
+						'date_format' => 'yy-mm-dd',
+						'display_format' => 'yy-mm-dd',
+						'first_day' => 1,
+					),
+					array (
+						'key' => 'field_552416a72a2c3',
+						'label' => 'Fin',
+						'name' => 'gou_booking_end',
+						'type' => 'date_picker',
+						'required' => 1,
+						'date_format' => 'yy-mm-dd',
+						'display_format' => 'yy-mm-dd',
+						'first_day' => 1,
+					),
+					array (
+						'key' => 'field_5524285e9236a',
+						'label' => 'État',
+						'name' => 'gou_booking_state',
+						'type' => 'radio',
+						'required' => 1,
+						'choices' => array (
+							'busy' => 'Réservé',
+							'maybe' => 'Peut-être',
+						),
+						'other_choice' => 0,
+						'save_other_choice' => 0,
+						'default_value' => '',
+						'layout' => 'vertical',
+					),
+				),
+				'location' => array (
+					array (
+						array (
+							'param' => 'post_type',
+							'operator' => '==',
+							'value' => 'gou_reservation',
+							'order_no' => 0,
+							'group_no' => 0,
+						),
+					),
+				),
+				'options' => array (
+					'position' => 'side',
+					'layout' => 'default',
+					'hide_on_screen' => array (
+					),
+				),
+				'menu_order' => 0,
+			));
+		}
 	}
 	
 	public function add_admin_page() {
@@ -62,19 +133,14 @@ class Goulue_Booking {
 		
 		require('html' . DIRECTORY_SEPARATOR . 'admin.phtml');
 	}
-	
-	public function register_post_types() {
-		register_post_type('gou_reservation', [
-		    'label'					=> 'Réservations',
-		    'public'				=> false,
-		    'publicly_queryable'	=> false,
-		    'show_ui'				=> true,
-		    'has_archive'			=> false,
-		    'hierarchical'			=> false,
-		    'show_in_menu'			=> true,
-		    'menu_icon'			    => 'dashicons-book-alt',
-		    'menu_position'			=> 30
-		]);
+		
+	public function admin_enqueue() {
+		global $current_screen;
+		
+		if($current_screen->id == 'gou_reservation_page_gou_booking_grid') {
+			wp_enqueue_style('gouOrganAdmin');
+			wp_enqueue_script('drag-select-js');
+		}
 	}
 	
 	public function get_year($y, $echo = true, $edit_links = false) {
@@ -200,35 +266,12 @@ class Goulue_Booking {
 			return $output;
 	}
 	
-	public function shortcode( $atts ) {
-		extract( shortcode_atts( array(
-			'year' => date('Y')
-		), $atts ) );
-		
-		return $this->get_year( $year );
+	public function post_edit_start_value($value) {
+		return isset($_GET['gou_booking_start']) ? $_GET['gou_booking_start'] : $value;
 	}
 	
-	public function ajax() {
-		if( !isset( $_POST['_wpnonce'] ) )
-			die('-1');
-		
-		check_ajax_referer('gou_booking');
-		
-		if( isset( $_POST['year'] ) ) {
-			update_option('gou_booking' . $_POST['year'], $_POST['rentals']);
-			die();
-		}
-		
-		die('-1');
-	}
-		
-	public function admin_enqueue() {
-		global $current_screen;
-		
-		if($current_screen->id == 'gou_reservation_page_gou_booking_grid') {
-			wp_enqueue_style('gouOrganAdmin');
-			wp_enqueue_script('drag-select-js');
-		}
+	public function post_edit_end_value($value) {
+		return isset($_GET['gou_booking_end']) ? $_GET['gou_booking_end'] : $value;
 	}
 }
 
