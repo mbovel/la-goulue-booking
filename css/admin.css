@@ -19,6 +19,13 @@
 	margin: 0;
 	cursor: pointer;
 }
+.gou_month a {
+	display: block;
+	padding: 5px;
+	margin: -5px;
+	height: 100%;
+	width: 100%;
+}
 .available {
 	background-color: #cfc;
 }
