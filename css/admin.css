@@ -1,0 +1,50 @@
+.gou_month {
+	display: inline-block;
+	margin: 10px;
+	vertical-align: top;
+	text-align: center;
+	width: auto;
+}
+.gou_month caption {
+	padding: 2px;
+}
+.gou_month caption h3 {
+	margin: 0.3em 0;
+}
+.gou_month td, .gou_month th {
+	padding: 5px;
+	border: 0;
+}
+.gou_month td:not(.pad) {
+	margin: 0;
+	cursor: pointer;
+}
+.available {
+	background-color: #cfc;
+}
+.maybe {
+	background-color: #ffc;
+}
+.busy {
+	background-color: #fcc;
+}
+.selected {
+	background-color: #ccf !important;
+}
+#tooltip {
+	width: 180px;
+	height: 60px;
+	background-color: rgba( 256, 256, 256, .8);
+	padding: 5px;
+}
+#tooltip a {
+	display: block;
+	float: left;
+	width: 50px;
+	height: 50px;
+	margin: 5px;
+	text-indent: -999em;
+}
+.gou_saved {
+	color: green;
+}

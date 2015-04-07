@@ -1,0 +1,64 @@
+<div class="wrap">
+	<?php wp_nonce_field( 'gou_organ' ); ?>
+	<input type="hidden" id="year" value="<?php echo $year; ?>" />
+	<h2>
+		<?php echo $title; ?> <?php echo $year; ?>
+		<a href="?page=gou_organ&year=<?php echo $year - 1; ?>" class="add-new-h2">← <?php echo $year - 1; ?></a>
+		<a href="?page=gou_organ&year=<?php echo $year + 1; ?>" class="add-new-h2"><?php echo $year + 1; ?> →</a>
+	</h2>
+	<div id="gou_saved" class="updated below-h2" style="display: none;">
+		<p>Agenda des locations mis à jour.</p>
+	</div>
+	<p>
+		<input type="radio" id="gou_statut_busy" name="gou_statut" class="gou_statut" value="busy" checked="checked"/>
+		<label for="gou_statut_busy">Occupé</label>
+	</p>
+	<p>
+		<input type="radio" id="gou_statut_maybe" name="gou_statut" class="gou_statut" value="maybe" />
+		<label for="gou_statut_maybe">Peut-être</label>
+	</p>
+	<p>
+		<input type="radio" id="gou_statut_available" name="gou_statut" class="gou_statut" value="available"/>
+		<label for="gou_statut_available">Libre</label>
+	</p>
+	<p>
+		<a id="gou_save" class="button-primary">Sauvegarder</a>
+	</p>
+	<?php echo $calendar; ?>
+</div>
+<script>
+	(function($) {
+		$('.gou_month').yesSelector({'itemsSelector':'td:not(.pad)'});
+		
+		$('.gou_month td:not(.pad)').mouseup(function(e) {
+			$('#tooltip').css({'left': e.pageX-140,'top': e.pageY-50,'position':'absolute'}).show();
+		});
+		
+		$(document).mouseup(function() {
+			$('.selected').removeClass().addClass( $('.gou_statut:checked').val() );
+		});
+		
+		$('#gou_save').click(function(e) {
+			rentals = {};
+			
+			$('.gou_month td:not(.pad)').filter(function() {
+				$this = $(this);
+				rentals[$this.attr('id')] = $this.attr('class');
+			});
+			
+			data = {
+				action: 'update_gou_organ',
+				_wpnonce: $('#_wpnonce').val(),
+				_wp_http_referer: $('input[name="_wp_http_referer"]').val(),
+				rentals: rentals,
+				year: $('#year').val()
+			};
+			
+			jQuery.post(ajaxurl, data, function() {
+				$('#gou_saved').fadeOut().fadeIn();
+			});
+			
+			e.preventDefault();
+		});
+	})(jQuery);
+</script>
